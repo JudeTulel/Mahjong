@@ -1,0 +1,74 @@
+.leaderboard {
+    background: #1a1a1a;
+    border-radius: 8px;
+    padding: 20px;
+    margin: 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.leaderboard h2 {
+    color: #ffffff;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.leaderboard-table {
+    width: 100%;
+}
+
+.leaderboard-header {
+    display: grid;
+    grid-template-columns: 80px 1fr 100px;
+    padding: 10px;
+    background: #2a2a2a;
+    border-radius: 4px;
+    margin-bottom: 10px;
+    font-weight: bold;
+    color: #ffffff;
+}
+
+.leaderboard-row {
+    display: grid;
+    grid-template-columns: 80px 1fr 100px;
+    padding: 8px;
+    border-bottom: 1px solid #333;
+    color: #ffffff;
+}
+
+.leaderboard-row:hover {
+    background: #2a2a2a;
+}
+
+.rank {
+    text-align: center;
+}
+
+.rank.winner {
+    color: #ffd700;
+    font-weight: bold;
+}
+
+.address {
+    font-family: monospace;
+}
+
+.time {
+    text-align: right;
+}
+
+.no-players {
+    text-align: center;
+    padding: 20px;
+    color: #666;
+}
+
+.leaderboard-loading,
+.leaderboard-error {
+    text-align: center;
+    padding: 20px;
+    color: #666;
+}
+
+.leaderboard-error {
+    color: #ff4444;
+}

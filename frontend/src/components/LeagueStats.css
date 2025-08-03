@@ -1,0 +1,55 @@
+.league-stats {
+    background: #1a1a1a;
+    border-radius: 8px;
+    padding: 20px;
+    margin: 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.league-stats h3 {
+    color: #ffffff;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+}
+
+.stat-item {
+    background: #2a2a2a;
+    padding: 15px;
+    border-radius: 4px;
+    text-align: center;
+}
+
+.stat-label {
+    color: #888;
+    font-size: 0.9em;
+    margin-bottom: 5px;
+}
+
+.stat-value {
+    color: #ffffff;
+    font-size: 1.2em;
+    font-weight: bold;
+}
+
+.league-stats-loading,
+.league-stats-error {
+    text-align: center;
+    padding: 20px;
+    color: #666;
+}
+
+.league-stats-error {
+    color: #ff4444;
+}
+
+@media (max-width: 600px) {
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+}

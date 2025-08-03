@@ -1,0 +1,219 @@
+import { Storage, Context, generateEvent, transferCoins, call, Address } from '@massalabs/massa-as-sdk';
+import { Args, Result, stringToBytes, bytesToString } from '@massalabs/as-types';
+
+const GAME_DURATION = 180; // 3 minutes in seconds
+const ENTRY_FEE = 2_000_000_000; // 2 MASSA tokens in nano units
+const TOP_PERCENTILE = 10; // Top 10%
+
+// Game state structures
+class Player {
+  constructor(
+    public address: string,
+    public startTime: u64,
+    public finishTime: u64 = 0,
+    public completed: bool = false
+  ) {}
+}
+
+class Game {
+  constructor(
+    public id: string,
+    public startTime: u64,
+    public endTime: u64,
+    public players: Array<Player> = [],
+    public finished: bool = false
+  ) {}
+}
+
+// Storage keys
+const CURRENT_GAME_KEY = "current_game";
+const GAME_HISTORY_KEY = "game_history_";
+const PLAYER_STATS_KEY = "player_stats_";
+
+/**
+ * Initialize a new game session
+ */
+export function startGame(_: StaticArray<u8>): void {
+  const now = Context.timestamp();
+  const gameId = Context.caller().toString() + "_" + now.toString();
+  
+  const game = new Game(
+    gameId,
+    now,
+    now + GAME_DURATION * 1000, // Convert to milliseconds
+    [],
+    false
+  );
+  
+  Storage.set(CURRENT_GAME_KEY, game);
+  generateEvent(`Game started: ${gameId}`);
+}
+
+/**
+ * Player joins the current game by paying entry fee
+ */
+export function joinGame(_: StaticArray<u8>): void {
+  // Verify entry fee payment
+  assert(Context.coins() >= ENTRY_FEE, "Entry fee is 2 MASSA tokens");
+  
+  // Get current game
+  const gameData = Storage.get(CURRENT_GAME_KEY);
+  assert(gameData !== null, "No active game");
+  
+  const game = gameData!.valueOf() as Game;
+  assert(!game.finished, "Game already finished");
+  assert(Context.timestamp() < game.endTime, "Game already ended");
+  
+  // Check if player already joined
+  for (let i = 0; i < game.players.length; i++) {
+    assert(game.players[i].address !== Context.caller().toString(), "Already joined");
+  }
+  
+  // Add player to game
+  const player = new Player(
+    Context.caller().toString(),
+    Context.timestamp()
+  );
+  game.players.push(player);
+  
+  Storage.set(CURRENT_GAME_KEY, game);
+  generateEvent(`${Context.caller().toString()} joined the game`);
+}
+
+/**
+ * Submit game completion time
+ */
+export function submitCompletion(serializedTime: StaticArray<u8>): void {
+  const args = new Args(serializedTime);
+  const finishTime = args.nextU64().unwrap();
+  
+  // Get current game
+  const gameData = Storage.get(CURRENT_GAME_KEY);
+  assert(gameData !== null, "No active game");
+  
+  const game = gameData!.valueOf() as Game;
+  assert(!game.finished, "Game already finished");
+  
+  // Find player and update completion
+  let playerFound = false;
+  for (let i = 0; i < game.players.length; i++) {
+    if (game.players[i].address === Context.caller().toString()) {
+      assert(!game.players[i].completed, "Already submitted");
+      
+      game.players[i].finishTime = finishTime;
+      game.players[i].completed = true;
+      playerFound = true;
+      break;
+    }
+  }
+  
+  assert(playerFound, "Player not in game");
+  
+  Storage.set(CURRENT_GAME_KEY, game);
+  generateEvent(`${Context.caller().toString()} completed game at ${finishTime}`);
+}
+
+/**
+ * End current game and distribute rewards
+ */
+export function endGame(_: StaticArray<u8>): void {
+  // Get current game
+  const gameData = Storage.get(CURRENT_GAME_KEY);
+  assert(gameData !== null, "No active game");
+  
+  const game = gameData!.valueOf() as Game;
+  assert(!game.finished, "Game already finished");
+  assert(Context.timestamp() >= game.endTime, "Game time not elapsed");
+  
+  // Mark game as finished
+  game.finished = true;
+  
+  // Calculate rewards
+  const completedPlayers = game.players.filter(p => p.completed);
+  if (completedPlayers.length > 0) {
+    // Sort by completion time (ascending)
+    completedPlayers.sort((a, b) => 
+      a.finishTime > b.finishTime ? 1 : (a.finishTime < b.finishTime ? -1 : 0)
+    );
+    
+    // Determine winners (top 10%)
+    const winnerCount = max(1, completedPlayers.length * TOP_PERCENTILE / 100);
+    const prizePool = ENTRY_FEE * game.players.length;
+    const rewardPerWinner = prizePool / winnerCount;
+    
+    // Distribute rewards
+    for (let i = 0; i < winnerCount && i < completedPlayers.length; i++) {
+      const winner = completedPlayers[i];
+      transferCoins(Address.fromByteString(stringToBytes(winner.address)), rewardPerWinner);
+      generateEvent(`Reward sent to ${winner.address}: ${rewardPerWinner} coins`);
+      
+      // Update player stats
+      updatePlayerStats(winner.address, true);
+    }
+    
+    // Update stats for non-winners
+    for (let i = winnerCount; i < completedPlayers.length; i++) {
+      updatePlayerStats(completedPlayers[i].address, false);
+    }
+  }
+  
+  // Save game to history
+  Storage.set(GAME_HISTORY_KEY + game.id, game);
+  Storage.set(CURRENT_GAME_KEY, null); // Clear current game
+  
+  generateEvent(`Game ${game.id} ended with ${completedPlayers.length} completions`);
+}
+
+/**
+ * Update player statistics
+ */
+function updatePlayerStats(playerAddress: string, isWinner: bool): void {
+  const statsKey = PLAYER_STATS_KEY + playerAddress;
+  let gamesPlayed: u32 = 0;
+  let gamesWon: u32 = 0;
+  
+  if (Storage.has(statsKey)) {
+    const statsData = Storage.get(statsKey)!.valueOf() as string;
+    const parts = statsData.split(",");
+    gamesPlayed = U32.parseInt(parts[0]);
+    gamesWon = U32.parseInt(parts[1]);
+  }
+  
+  gamesPlayed++;
+  if (isWinner) gamesWon++;
+  
+  Storage.set(statsKey, `${gamesPlayed},${gamesWon}`);
+}
+
+/**
+ * Get player statistics
+ */
+export function getPlayerStats(serializedAddress: StaticArray<u8>): StaticArray<u8> {
+  const args = new Args(serializedAddress);
+  const address = args.nextString().unwrap();
+  
+  const statsKey = PLAYER_STATS_KEY + address;
+  if (!Storage.has(statsKey)) {
+    return new Result<string>(0, "0,0").serialize();
+  }
+  
+  const stats = Storage.get(statsKey)!.valueOf() as string;
+  return new Result<string>(0, stats).serialize();
+}
+
+/**
+ * Get current game information
+ */
+export function getCurrentGame(_: StaticArray<u8>): StaticArray<u8> {
+  if (!Storage.has(CURRENT_GAME_KEY)) {
+    return new Result<string>(0, "null").serialize();
+  }
+  
+  const game = Storage.get(CURRENT_GAME_KEY)!.valueOf() as Game;
+  return new Result<string>(0, JSON.stringify(game)).serialize();
+}
+
+// Helper function for max
+function max(a: u32, b: u32): u32 {
+  return a > b ? a : b;
+}
