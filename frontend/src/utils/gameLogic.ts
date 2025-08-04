@@ -153,7 +153,7 @@ export const createGameBoard = (difficulty: 'easy' | 'medium' | 'hard'): Tile[] 
   const pairs = totalTiles / 2;
   const allTileTypes = Object.values(TileType);
   
-  let tilesToPlace: TileType[] = [];
+  const tilesToPlace: TileType[] = [];
   for (let i = 0; i < pairs; i++) {
     // Ensure we don't run out of unique tile types
     const type = allTileTypes[i % allTileTypes.length];

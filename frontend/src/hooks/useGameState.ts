@@ -113,7 +113,7 @@ const gameReducer = (state: GameState, action: GameAction): GameState => {
               announcement = 'Quadra Kill! 💫💫💫💫';
             }
 
-            specialAnnouncement = announcement;
+            specialAnnouncement = `💣 ${pairsToRemove} Pair(s) Cleared! ${announcement}`;
             // Find and remove pairs using our utility function
             finalTiles = removeRandomPairs(finalTiles, pairsToRemove);
           }
@@ -158,7 +158,7 @@ const gameReducer = (state: GameState, action: GameAction): GameState => {
         selectedTiles: state.selectedTiles.filter(t => t.id !== tileId),
         combo: 0, // reset combo on misclick or manual deselect
         comboAnnouncement: null,
-        specialAnnouncement: state.combo > 2 ? 'Combo Broken 😞' : null
+        specialAnnouncement: 'Combo Broken 😞'
       };
     }
     
@@ -180,8 +180,8 @@ const gameReducer = (state: GameState, action: GameAction): GameState => {
       let specialAnnouncement: string | null = null;
 
       if (combo > 0 && combo % 7 === 0) {
-        specialAnnouncement = 'Amazing! 🤩';
         const pairsToRemove = combo / 7;
+        specialAnnouncement = `💣 ${pairsToRemove} Pair(s) Cleared! Amazing! 🤩`;
         finalTiles = removeRandomPairs(finalTiles, pairsToRemove);
       }
       

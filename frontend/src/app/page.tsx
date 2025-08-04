@@ -1,8 +1,8 @@
 'use client';
 
-import { Game } from '../components/game/Game';
+import App from '../App';
 
 export default function Home() {
-  return <Game />;
+  return <App />;
 }
 

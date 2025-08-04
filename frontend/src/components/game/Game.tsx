@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { GameBoard } from './GameBoard';
 import { GameInfo } from './GameInfo';
 import { DifficultySelector } from './DifficultySelector';
@@ -6,11 +6,38 @@ import { ComboAnnouncement } from '../ui/ComboAnnouncement';
 import { SpecialAnnouncement } from '../ui/SpecialAnnouncement';
 import { useGameState } from '../../hooks/useGameState';
 import { canMatchTiles } from '../../utils/gameLogic';
+import { Difficulty } from '../../types';
 
-export const Game: React.FC = () => {
+interface GameProps {
+  difficulty?: Difficulty;
+  onGameComplete?: (timeInSeconds: number, difficulty: Difficulty) => void;
+}
+
+export const Game: React.FC<GameProps> = ({ difficulty: propDifficulty, onGameComplete }) => {
   const { gameState, startGame, selectTile, deselectTile, resetGame, clearSpecialAnnouncement } = useGameState();
-  const [showDifficultySelector, setShowDifficultySelector] = useState(true);
+  const [showDifficultySelector, setShowDifficultySelector] = useState(!propDifficulty);
   const [matchTimeout, setMatchTimeout] = useState<NodeJS.Timeout | null>(null);
+  const [gameCompleted, setGameCompleted] = useState(false);
+
+  // Start game automatically if difficulty is provided
+  useEffect(() => {
+    if (propDifficulty && !gameState.tiles.length) {
+      const mappedDifficulty = propDifficulty === 'normal' ? 'medium' : 
+                              propDifficulty === 'hard' ? 'hard' : 'easy';
+      startGame(mappedDifficulty);
+      setShowDifficultySelector(false);
+    }
+  }, [propDifficulty, gameState.tiles.length, startGame]);
+
+  // Handle game completion
+  useEffect(() => {
+    if (gameState.isWon && !gameCompleted && onGameComplete) {
+      setGameCompleted(true);
+      const difficulty = gameState.difficulty === 'medium' ? 'normal' : 
+                        gameState.difficulty === 'hard' ? 'hard' : 'easy';
+      onGameComplete(gameState.timeElapsed, difficulty);
+    }
+  }, [gameState.isWon, gameState.timeElapsed, gameState.difficulty, gameCompleted, onGameComplete]);
 
   // Handle tile selection with automatic deselection for non-matches
   const handleTileClick = useCallback((tileId: string) => {
@@ -51,6 +78,7 @@ export const Game: React.FC = () => {
   const handleDifficultySelect = (difficulty: 'easy' | 'medium' | 'hard') => {
     startGame(difficulty);
     setShowDifficultySelector(false);
+    setGameCompleted(false);
   };
 
   // Handle game restart
@@ -59,6 +87,7 @@ export const Game: React.FC = () => {
       clearTimeout(matchTimeout);
       setMatchTimeout(null);
     }
+    setGameCompleted(false);
     startGame(gameState.difficulty);
   };
 
@@ -69,6 +98,7 @@ export const Game: React.FC = () => {
       setMatchTimeout(null);
     }
     resetGame();
+    setGameCompleted(false);
     setShowDifficultySelector(true);
   };
 
@@ -125,100 +155,46 @@ export const Game: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-blue-900 text-white">
-      {/* Combo announcement */}
-      <ComboAnnouncement message={gameState.comboAnnouncement} />
-      <SpecialAnnouncement 
-        announcement={gameState.specialAnnouncement}
-        onClose={clearSpecialAnnouncement}
-      />
-      {/* Header */}
-      <header className="bg-white/10 shadow-lg border-b border-white/20">
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <h1 className="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600">Mahjong Mania</h1>
-            <div className="text-sm text-gray-600">
-              Use Ctrl+R to restart, Ctrl+N for new game, ESC to deselect
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <div className="max-w-7xl mx-auto p-4">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Game Info Sidebar */}
-          <div className="lg:col-span-1">
-            <GameInfo
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+      <div className="max-w-7xl mx-auto">
+        <div className="flex flex-col lg:flex-row gap-6">
+          {/* Game Info Panel */}
+          <div className="lg:w-80 flex-shrink-0">
+            <GameInfo 
               gameState={gameState}
               onRestart={handleRestart}
               onNewGame={handleNewGame}
-              className="sticky top-4"
             />
           </div>
-
+          
           {/* Game Board */}
-          <div className="lg:col-span-3">
-            <div className="bg-black/30 backdrop-blur-xl rounded-2xl shadow-2xl p-6 border border-white/20 overflow-auto max-h-[80vh]">
-              {gameState.tiles.length > 0 ? (
-                <GameBoard
-                  tiles={gameState.tiles}
-                  onTileClick={handleTileClick}
+          <div className="flex-1 flex items-center justify-center">
+            <div className="relative">
+              <GameBoard 
+                tiles={gameState.tiles}
+                onTileClick={handleTileClick}
+                difficulty={gameState.difficulty}
+              />
+              
+              {/* Combo Announcement */}
+              {gameState.comboAnnouncement && (
+                <ComboAnnouncement 
+                  message={gameState.comboAnnouncement}
+                  onComplete={() => {/* Auto-clear after animation */}}
                 />
-              ) : (
-                <div className="flex items-center justify-center h-64 text-gray-500">
-                  <div className="text-center">
-                    <div className="text-xl mb-2">No game in progress</div>
-                    <div className="text-sm">Select a difficulty to start playing</div>
-                  </div>
-                </div>
+              )}
+              
+              {/* Special Announcement */}
+              {gameState.specialAnnouncement && (
+                <SpecialAnnouncement 
+                  message={gameState.specialAnnouncement}
+                  onComplete={clearSpecialAnnouncement}
+                />
               )}
             </div>
           </div>
         </div>
       </div>
-
-      {/* Game Over Modal */}
-      {(gameState.isWon || gameState.isGameOver) && (
-        <div className="fixed inset-0 bg-gray-900 bg-opacity-80 flex items-center justify-center z-50 animate-fade-in">
-          <div className="bg-white rounded-xl shadow-2xl p-8 max-w-md w-full">
-            <div className="text-center">
-              <div className={`text-6xl mb-4 ${gameState.isWon ? 'text-green-500' : 'text-red-500'}`}>
-                {gameState.isWon ? '🎉🏆🥳' : '😞👎💔'}
-              </div>
-              <h2 className={`text-2xl font-bold mb-4 ${gameState.isWon ? 'text-green-600' : 'text-red-600'}`}>
-                {gameState.isWon ? 'You are a Mahjong Master!' : 'Better Luck Next Time!'}
-              </h2>
-              <div className="text-gray-600 mb-6">
-                {gameState.isWon ? (
-                  <>
-                    <p>You completed the game!</p>
-                    <p className="mt-2">
-                      Score: {gameState.score} | Time: {Math.floor(gameState.timeElapsed / 60)}:
-                      {(gameState.timeElapsed % 60).toString().padStart(2, '0')} | Moves: {gameState.moves}
-                    </p>
-                  </>
-                ) : (
-                  <p>No more moves available. Better luck next time!</p>
-                )}
-              </div>
-              <div className="flex gap-3">
-                <button
-                  onClick={handleRestart}
-                  className="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded transition-colors duration-200"
-                >
-                  Play Again
-                </button>
-                <button
-                  onClick={handleNewGame}
-                  className="flex-1 bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded transition-colors duration-200"
-                >
-                  New Game
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

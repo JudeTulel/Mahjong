@@ -1,55 +1,193 @@
 .league-stats {
-    background: #1a1a1a;
-    border-radius: 8px;
-    padding: 20px;
+    background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+    border-radius: 12px;
+    padding: 24px;
     margin: 20px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    border: 1px solid #333;
 }
 
 .league-stats h3 {
     color: #ffffff;
     text-align: center;
-    margin-bottom: 20px;
+    margin-bottom: 24px;
+    font-size: 1.6rem;
+    font-weight: 700;
+    background: linear-gradient(45deg, #4ade80, #22c55e);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
 .stats-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 20px;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
 }
 
 .stat-item {
-    background: #2a2a2a;
-    padding: 15px;
-    border-radius: 4px;
+    background: linear-gradient(135deg, #2a2a2a 0%, #333 100%);
+    padding: 20px;
+    border-radius: 8px;
     text-align: center;
+    border: 1px solid #444;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #4ade80, #22c55e);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.stat-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+}
+
+.stat-item:hover::before {
+    opacity: 1;
 }
 
 .stat-label {
     color: #888;
-    font-size: 0.9em;
-    margin-bottom: 5px;
+    font-size: 0.85rem;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
 }
 
 .stat-value {
     color: #ffffff;
-    font-size: 1.2em;
-    font-weight: bold;
+    font-size: 1.4rem;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.stat-value.pool-size {
+    background: linear-gradient(45deg, #ffd700, #ffed4e);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-size: 1.6rem;
+}
+
+.stat-value.time-left {
+    font-family: 'Courier New', monospace;
+    color: #4ade80;
+}
+
+.league-info {
+    background: rgba(74, 222, 128, 0.1);
+    border: 1px solid rgba(74, 222, 128, 0.3);
+    border-radius: 8px;
+    padding: 20px;
+    margin-top: 20px;
+}
+
+.info-text {
+    color: #e5e7eb;
+    margin: 8px 0;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    text-align: center;
+}
+
+.info-text:first-child {
+    font-weight: 600;
+    color: #4ade80;
 }
 
 .league-stats-loading,
 .league-stats-error {
     text-align: center;
-    padding: 20px;
+    padding: 40px 20px;
     color: #666;
+    font-size: 1.1rem;
 }
 
 .league-stats-error {
     color: #ff4444;
+    background: rgba(255, 68, 68, 0.1);
+    border: 1px solid rgba(255, 68, 68, 0.3);
+    border-radius: 8px;
 }
 
-@media (max-width: 600px) {
+/* Special styling for specific stats */
+.stat-item:nth-child(1) .stat-value {
+    color: #60a5fa; /* Entry fee - blue */
+}
+
+.stat-item:nth-child(2) .stat-value {
+    color: #a78bfa; /* Players - purple */
+}
+
+.stat-item:nth-child(3) .stat-value {
+    /* Pool size - gold gradient already applied */
+}
+
+.stat-item:nth-child(4) .stat-value {
+    /* Time left - green already applied */
+}
+
+.stat-item:nth-child(5) .stat-value {
+    color: #f59e0b; /* Winners share - amber */
+}
+
+.stat-item:nth-child(6) .stat-value {
+    color: #ef4444; /* Dev fee - red */
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .league-stats {
+        margin: 10px;
+        padding: 16px;
+    }
+    
+    .stats-grid {
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 12px;
+    }
+    
+    .stat-item {
+        padding: 16px;
+    }
+    
+    .stat-value {
+        font-size: 1.2rem;
+    }
+    
+    .stat-value.pool-size {
+        font-size: 1.3rem;
+    }
+    
+    .league-stats h3 {
+        font-size: 1.3rem;
+    }
+}
+
+@media (max-width: 480px) {
     .stats-grid {
         grid-template-columns: 1fr;
     }
+    
+    .league-info {
+        padding: 16px;
+    }
+    
+    .info-text {
+        font-size: 0.9rem;
+    }
 }
+
