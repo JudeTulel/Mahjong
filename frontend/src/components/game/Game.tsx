@@ -180,15 +180,15 @@ export const Game: React.FC<GameProps> = ({ difficulty: propDifficulty, onGameCo
               {gameState.comboAnnouncement && (
                 <ComboAnnouncement 
                   message={gameState.comboAnnouncement}
-                  onComplete={() => {/* Auto-clear after animation */}}
                 />
               )}
               
               {/* Special Announcement */}
               {gameState.specialAnnouncement && (
                 <SpecialAnnouncement 
-                  message={gameState.specialAnnouncement}
-                  onComplete={clearSpecialAnnouncement}
+                  announcement={gameState.specialAnnouncement}
+                  onClose={clearSpecialAnnouncement}
+
                 />
               )}
             </div>
