@@ -3,8 +3,11 @@ import { Difficulty } from './types';
 import { Leaderboard } from './components/Leaderboard';
 import { LeagueStats } from './components/LeagueStats';
 import { Game } from './components/game/Game';
+import { WalletStatus } from './components/WalletStatus';
 import { useRegisterPlayer, useLeagueInfo } from './hooks/useMassa';
+import { useBearbyWallet } from './hooks/useBearbyWallet';
 import './App.css';
+import './components/WalletStatus.css';
 
 function App() {
   const [selectedDifficulty, setSelectedDifficulty] = useState<Difficulty>('easy');
@@ -13,6 +16,7 @@ function App() {
   const [completionTime, setCompletionTime] = useState<number>(0);
   const [showSuccess, setShowSuccess] = useState(false);
   const { registerPlayer, registering, error } = useRegisterPlayer();
+  const { connected, installed, connect, error: walletError, clearError } = useBearbyWallet();
 
   const difficulties: Difficulty[] = ['easy', 'normal', 'hard'];
   const entryFees = {
@@ -46,7 +50,28 @@ function App() {
     }
   }, [showSuccess]);
 
-  const handlePlayGame = (difficulty: Difficulty) => {
+  const handlePlayGame = async (difficulty: Difficulty) => {
+    // Clear any previous wallet errors
+    if (walletError) {
+      clearError();
+    }
+    
+    // Check if wallet is installed
+    if (!installed) {
+      alert('Please install the Bearby wallet extension to play. Visit https://bearby.io to download.');
+      return;
+    }
+    
+    // Connect wallet if not connected
+    if (!connected) {
+      const connectionSuccess = await connect();
+      if (!connectionSuccess) {
+        alert('Please connect your Bearby wallet to play the game.');
+        return;
+      }
+    }
+    
+    // Proceed with game if wallet is connected
     setSelectedDifficulty(difficulty);
     setShowGame(true);
     setGameCompleted(false);
@@ -170,6 +195,7 @@ function App() {
         <div className="header-content">
           <h1>🀄 Mahjong League</h1>
           <p className="header-subtitle">Compete in timed Mahjong challenges and win MASSA tokens!</p>
+          <WalletStatus />
         </div>
       </header>
 
@@ -193,13 +219,24 @@ function App() {
           
           <div className="play-section">
             <button
-              className="play-game-btn"
+              className={`play-game-btn ${!connected ? 'wallet-required' : ''}`}
               onClick={() => handlePlayGame(selectedDifficulty)}
+              disabled={!installed}
             >
-              🎮 Play {selectedDifficulty.toUpperCase()} Game
+              {!installed ? (
+                <>⚠️ Install Bearby Wallet</>
+              ) : !connected ? (
+                <>🔗 Connect Wallet & Play {selectedDifficulty.toUpperCase()}</>
+              ) : (
+                <>🎮 Play {selectedDifficulty.toUpperCase()} Game</>
+              )}
             </button>
             <p className="play-info">
-              Complete the game to automatically submit your score to the league!
+              {!connected ? (
+                "Connect your Bearby wallet to play and compete for MASSA tokens!"
+              ) : (
+                "Complete the game to automatically submit your score to the league!"
+              )}
             </p>
           </div>
         </div>

@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@hicaru/bearby.js": "^0.6.1",
     "@massalabs/massa-web3": "^5.2.0",
     "next": "15.4.4",
     "react": "^19.1.0",

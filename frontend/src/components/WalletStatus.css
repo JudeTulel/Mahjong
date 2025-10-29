@@ -1,0 +1,156 @@
+/* Wallet Status Component Styles */
+.wallet-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-radius: 8px;
+  border: 2px solid;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  margin: 10px 0;
+  transition: all 0.3s ease;
+}
+
+.wallet-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.wallet-icon {
+  font-size: 20px;
+  min-width: 24px;
+}
+
+.wallet-icon.spinning {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.wallet-text {
+  font-weight: 500;
+  color: #fff;
+}
+
+.wallet-details {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.wallet-address {
+  font-family: 'Courier New', monospace;
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.wallet-network {
+  font-size: 12px;
+  color: #ccc;
+  text-transform: uppercase;
+}
+
+/* Status-specific styling */
+.wallet-status.not-installed {
+  border-color: #f59e0b;
+  background: rgba(245, 158, 11, 0.1);
+}
+
+.wallet-status.error {
+  border-color: #ef4444;
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.wallet-status.loading {
+  border-color: #3b82f6;
+  background: rgba(59, 130, 246, 0.1);
+}
+
+.wallet-status.disconnected {
+  border-color: #6b7280;
+  background: rgba(107, 114, 128, 0.1);
+}
+
+.wallet-status.connected {
+  border-color: #10b981;
+  background: rgba(16, 185, 129, 0.1);
+}
+
+/* Button styles */
+.wallet-status button,
+.wallet-status a {
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.install-button {
+  background: #f59e0b;
+  color: #000;
+}
+
+.install-button:hover {
+  background: #d97706;
+  transform: translateY(-1px);
+}
+
+.connect-button {
+  background: #3b82f6;
+  color: #fff;
+}
+
+.connect-button:hover {
+  background: #2563eb;
+  transform: translateY(-1px);
+}
+
+.disconnect-button {
+  background: #ef4444;
+  color: #fff;
+}
+
+.disconnect-button:hover {
+  background: #dc2626;
+  transform: translateY(-1px);
+}
+
+.clear-error-button {
+  background: #6b7280;
+  color: #fff;
+}
+
+.clear-error-button:hover {
+  background: #4b5563;
+  transform: translateY(-1px);
+}
+
+/* Responsive design */
+@media (max-width: 640px) {
+  .wallet-status {
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px;
+  }
+  
+  .wallet-info {
+    justify-content: center;
+  }
+  
+  .wallet-status button,
+  .wallet-status a {
+    width: 100%;
+    text-align: center;
+  }
+}
